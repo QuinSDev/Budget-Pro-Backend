@@ -19,8 +19,17 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
 /**
- * Configuración de la aplicación que incluye la configuración de CORS, 
- * gestión de autenticación. 
+ * Configuración de la aplicación que abarca múltiples aspectos de seguridad y 
+ * autenticación,incluyendo la configuración de Cross-Origin Resource Sharing 
+ * (CORS) para permitir solicitudes desde un origen específico, la gestión de 
+ * autenticación con un proveedor personalizado, y otras configuraciones 
+ * relacionadas con la seguridad de la aplicación.
+ * 
+ * Este archivo de configuración define los componentes necesarios para la 
+ * autenticación de usuarios,como el administrador de autenticación, el 
+ * proveedor de autenticación, el servicio de detalles deusuario y el 
+ * codificador de contraseñas. Además, configura las reglas de CORS para 
+ * permitir interacciones seguras con el frontend desde el origen http://localhost:5173.
  * 
  * @author QuinSDev
  */
