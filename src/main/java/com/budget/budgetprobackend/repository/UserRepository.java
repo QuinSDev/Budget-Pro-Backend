@@ -23,6 +23,6 @@ public interface UserRepository extends JpaRepository<User, String>{
      * @return Un objeto Optional que puede contener el usuario si se
      * encuentra, o estar vacío si no se encuentra.
      */
-    Optional<User> finByUserName(String userName);
+    Optional<User> findByUserName(String userName);
     
 }
