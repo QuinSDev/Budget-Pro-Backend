@@ -1,11 +1,19 @@
 package com.budget.budgetprobackend.security;
 
+import com.budget.budgetprobackend.service.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -21,7 +29,13 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * @author QuinSDev
  */
 @Component
+@RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+    
+    @Autowired
+    private final JwtService jwtService;
+    
+    private final UserDetailsService userDetailsService;
     
     /**
      * Implementación del método doFilterInternal de OncePerRequestFilter que
@@ -40,17 +54,40 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         final String token = getTokenFromRequest(request);
+        final String userName;
 
         if (token == null) {
             /* Si no se encontró un Token JWT, se permite que la solicitud
             continúe sin autenticación. */
             filterChain.doFilter(request, response);
             return;
-        } else {
         }
-
+        
+        userName = jwtService.getUsernameFromToken(token);
+        
+        if (userName != null && 
+                SecurityContextHolder.getContext().getAuthentication() == null) 
+        {
+            UserDetails userDetails = userDetailsService.loadUserByUsername(userName);
+            
+            if (jwtService.isTokenValid(token, userDetails)) {
+                // Crea un token de autenticación con el usuario y sus roles.
+                UsernamePasswordAuthenticationToken authToken = 
+                        new UsernamePasswordAuthenticationToken(
+                                userDetails, 
+                                null,
+                                userDetails.getAuthorities());
+                
+                // Agrega detalles adicionales, como la solicitud web al token.
+                authToken.setDetails(new WebAuthenticationDetailsSource()
+                        .buildDetails(request));
+                
+                // Estable el token de autenticación en el contexto de seguridad.
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+            }
+        }
+        
         filterChain.doFilter(request, response);
-
     }
     
     /**
