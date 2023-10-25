@@ -4,11 +4,15 @@ import com.budget.budgetprobackend.exception.MyException;
 import com.budget.budgetprobackend.model.Role;
 import com.budget.budgetprobackend.model.User;
 import com.budget.budgetprobackend.repository.UserRepository;
+import com.budget.budgetprobackend.request.LoginRequest;
 import com.budget.budgetprobackend.request.RegisterRequest;
 import com.budget.budgetprobackend.response.AuthResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -25,16 +29,18 @@ import org.springframework.stereotype.Service;
 public class AuthService {
     
     @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
     
     @Autowired
-    private JwtService jwtService;
+    private final JwtService jwtService;
     
     @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
+    
+    private final AuthenticationManager authenticationManager;
     
     /**
-     * Registraun nuevo usuario en el sistema.
+     * Registra un nuevo usuario en el sistema.
      * 
      * @param request: La solicitud de registro que contiene los datos del nuevo
      *                 usuario.
@@ -68,6 +74,25 @@ public class AuthService {
             return new AuthResponse("Error en el registro: " + ex.getMessage());
         }
 
+    }
+    
+    /**
+     * Realiza el inicio de sesión(login) del usuario.
+     * 
+     * @param request: La solicitud de inicio de sesión que contiene el nombre
+     *                 de usuario y la contraseña.
+     * @return Una respuesta de autenticación que incluye un token si el inicio
+     *         de sesión es exitoso o un mensaje de error en caso contrario.
+     */
+    public AuthResponse loginUser(LoginRequest request) {
+        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
+                request.getUserName(), request.getPassword()));
+        UserDetails user = userRepository.findByUserName(request.getUserName())
+                .orElseThrow();
+        String token = jwtService.getToken(user);
+        return AuthResponse.builder()
+                .token(token)
+                .build();
     }
     
     /**
